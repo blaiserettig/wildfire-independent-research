@@ -4,3 +4,4 @@
 *.nc filter=lfs diff=lfs merge=lfs -text
 data/eia/ELEC/ELEC.txt filter=lfs diff=lfs merge=lfs -text
 data/eia/TOTAL/TOTAL.txt filter=lfs diff=lfs merge=lfs -text
+*.rds filter=lfs diff=lfs merge=lfs -text
