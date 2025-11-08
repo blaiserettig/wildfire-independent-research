@@ -3,10 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from rasterstats import zonal_stats
 import os
 import json
-import helper
 import rasterio
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
@@ -66,21 +64,34 @@ plt.show()
 fires = bnd_pnw[(bnd_pnw['YEAR'] >= 2000) & (bnd_pnw['YEAR'] <= 2024)]
 climate_stats = []
 
-# to geographic CRS
 fires_geo = fires.to_crs(epsg=4269)
 fires_geo['centroid_lon'] = fires_geo.geometry.centroid.x
 fires_geo['centroid_lat'] = fires_geo.geometry.centroid.y
+
+
+def prism_raster_paths(base_dir, variable, years=range(2000, 2025)):
+            paths = {}
+            for y in years:
+                if variable == 'tmean':
+                    paths[y] = f"{base_dir}/mean_temp/annual/prism_tmean_us_25m_{y}/prism_tmean_us_25m_{y}.tif"
+                elif variable == 'ppt':
+                    paths[y] = f"{base_dir}/precip/annual/prism_ppt_us_25m_{y}/prism_ppt_us_25m_{y}.tif"
+            return paths
+prism_paths = {
+            'tmean': prism_raster_paths("data/prism", 'tmean'),
+            'ppt': prism_raster_paths("data/prism", 'ppt')
+        }
 
 for year in range(2000, 2025):
     fires_year = fires_geo[fires_geo['YEAR'] == year]
     if fires_year.empty:
         continue
 
-    if year not in helper.prism_paths['tmean'] or year not in helper.prism_paths['ppt']:
+    if year not in prism_paths['tmean'] or year not in prism_paths['ppt']:
         continue
     
-    tmean_tif = helper.prism_paths['tmean'][year]
-    ppt_tif = helper.prism_paths['ppt'][year]
+    tmean_tif = prism_paths['tmean'][year]
+    ppt_tif = prism_paths['ppt'][year]
 
     print(f"Processing {year}...")
 
@@ -118,7 +129,45 @@ plt.show()
 fires_climate['temp_x_drought'] = fires_climate['tmean'] * (1 / fires_climate['ppt'])
 fires_climate['vpd_proxy'] = fires_climate['tmean'] / fires_climate['ppt']
 
-features = ['tmean', 'ppt', 'temp_x_drought', 'vpd_proxy']
+print("\n=== Loading DSCI Data ===")
+dsci_df = pd.read_csv("data/dsci/dm_export_20000101_20241231.csv")
+dsci_df['MapDate'] = pd.to_datetime(dsci_df['MapDate'], format='%Y%m%d', errors='coerce')
+dsci_df['YEAR'] = dsci_df['MapDate'].dt.year
+dsci_df['MONTH'] = dsci_df['MapDate'].dt.month
+dsci_df['STATE'] = dsci_df['Name'].map({'Oregon': 'OR', 'Washington': 'WA', 'Idaho': 'ID'})
+
+dsci_pnw = dsci_df[dsci_df['STATE'].isin(['WA', 'OR', 'ID']) & 
+                   (dsci_df['YEAR'] >= 2000) & (dsci_df['YEAR'] <= 2024)].copy()
+
+dsci_annual = dsci_pnw.groupby(['STATE', 'YEAR']).agg({
+    'DSCI': ['mean', 'max', 'min', 'std']
+}).reset_index()
+dsci_annual.columns = ['STATE', 'YEAR', 'dsci_mean', 'dsci_max', 'dsci_min', 'dsci_std']
+
+fires_climate = fires_climate.merge(
+    dsci_annual,
+    on=['STATE', 'YEAR'],
+    how='left'
+)
+
+fires_climate['fire_month'] = fires_climate['Ig_Date'].dt.month
+dsci_monthly = dsci_pnw.groupby(['STATE', 'YEAR', 'MONTH']).agg({
+    'DSCI': 'mean'
+}).reset_index()
+dsci_monthly.columns = ['STATE', 'YEAR', 'MONTH', 'dsci_monthly']
+
+fires_climate = fires_climate.merge(
+    dsci_monthly,
+    left_on=['STATE', 'YEAR', 'fire_month'],
+    right_on=['STATE', 'YEAR', 'MONTH'],
+    how='left'
+)
+
+print(f"Loaded DSCI data: {len(dsci_pnw)} records")
+print(f"States: {dsci_pnw['STATE'].unique()}")
+print(f"Date range: {dsci_pnw['MapDate'].min()} to {dsci_pnw['MapDate'].max()}")
+
+features = ['tmean', 'ppt', 'temp_x_drought', 'vpd_proxy', 'dsci_mean']
 X = fires_climate[features].dropna()
 y = fires_climate.loc[X.index, 'area_ha']
 
@@ -131,8 +180,63 @@ importance_df = pd.DataFrame({
 }).sort_values('importance', ascending=False)
 
 sns.barplot(data=importance_df, x='importance', y='feature')
-plt.title('Climate Variable Importance for Fire Size')
+plt.title('Climate Variable Importance for Fire Size (Including DSCI)')
 plt.show()
+
+if 'dsci_mean' in fires_climate.columns:
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    
+    # plot 1, fire size vs DSCI
+    valid_dsci = fires_climate[fires_climate['dsci_mean'].notna() & (fires_climate['area_ha'] > 0)]
+    if len(valid_dsci) > 0:
+        axes[0, 0].scatter(valid_dsci['dsci_mean'], valid_dsci['area_ha'],
+                          alpha=0.5, s=30, c=valid_dsci['YEAR'], cmap='viridis')
+        axes[0, 0].set_xlabel('Annual Mean DSCI')
+        axes[0, 0].set_ylabel('Fire Size (ha)')
+        axes[0, 0].set_yscale('log')
+        axes[0, 0].set_title('Fire Size vs Drought Severity (Annual Mean)')
+        axes[0, 0].grid(True, alpha=0.3)
+        plt.colorbar(axes[0, 0].collections[0], ax=axes[0, 0], label='Year')
+        
+        corr_dsci = valid_dsci[['dsci_mean', 'area_ha']].corr().iloc[0, 1]
+        axes[0, 0].text(0.05, 0.95, f'r = {corr_dsci:.3f}',
+                       transform=axes[0, 0].transAxes, va='top',
+                       bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    
+    # plot 2: DSCI trends over time
+    if len(dsci_annual) > 0:
+        for state in ['WA', 'OR', 'ID']:
+            state_dsci = dsci_annual[dsci_annual['STATE'] == state]
+            if len(state_dsci) > 0:
+                axes[0, 1].plot(state_dsci['YEAR'], state_dsci['dsci_mean'],
+                               marker='o', label=state, linewidth=2)
+        axes[0, 1].set_xlabel('Year')
+        axes[0, 1].set_ylabel('Mean DSCI')
+        axes[0, 1].set_title('Drought Severity Trends by State')
+        axes[0, 1].legend()
+        axes[0, 1].grid(True, alpha=0.3)
+    
+    # plot 3: DSCI vs temperature and precipitation
+    if len(valid_dsci) > 0:
+        scatter = axes[1, 0].scatter(valid_dsci['tmean'], valid_dsci['ppt'],
+                                   c=valid_dsci['dsci_mean'], cmap='YlOrRd',
+                                   alpha=0.6, s=30, edgecolors='black')
+        axes[1, 0].set_xlabel('Mean Temperature (°C)')
+        axes[1, 0].set_ylabel('Precipitation (mm)')
+        axes[1, 0].set_title('Climate Space Colored by DSCI')
+        plt.colorbar(scatter, ax=axes[1, 0], label='DSCI')
+        axes[1, 0].grid(True, alpha=0.3)
+    
+    # plot 4, DSCI distribution by state
+    if len(dsci_pnw) > 0:
+        sns.boxplot(data=dsci_pnw, x='STATE', y='DSCI', ax=axes[1, 1])
+        axes[1, 1].set_xlabel('State')
+        axes[1, 1].set_ylabel('DSCI')
+        axes[1, 1].set_title('DSCI Distribution by State')
+        axes[1, 1].grid(True, alpha=0.3, axis='y')
+    
+    plt.tight_layout()
+    plt.show()
 
 
 ###
@@ -143,19 +247,45 @@ plt.show()
 threshold = fires_climate['area_ha'].quantile(0.95)
 fires_climate['is_megafire'] = fires_climate['area_ha'] > threshold
 
-# Compare climate conditions
-fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+if 'dsci_mean' in fires_climate.columns:
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    n_plots = 4
+else:
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    axes = axes.reshape(1, -1)
+    n_plots = 2
 
-sns.boxplot(data=fires_climate, x='is_megafire', y='tmean', ax=axes[0])
-axes[0].set_title('Temperature: Normal vs Mega Fires')
+sns.boxplot(data=fires_climate, x='is_megafire', y='tmean', ax=axes[0, 0])
+axes[0, 0].set_title('Temperature: Normal vs Mega Fires')
+axes[0, 0].set_xticklabels(['Normal', 'Mega Fire'])
 
-sns.boxplot(data=fires_climate, x='is_megafire', y='ppt', ax=axes[1])
-axes[1].set_title('Precipitation: Normal vs Mega Fires')
+sns.boxplot(data=fires_climate, x='is_megafire', y='ppt', ax=axes[0, 1])
+axes[0, 1].set_title('Precipitation: Normal vs Mega Fires')
+axes[0, 1].set_xticklabels(['Normal', 'Mega Fire'])
+
+if 'dsci_mean' in fires_climate.columns and n_plots >= 4:
+    sns.boxplot(data=fires_climate[fires_climate['dsci_mean'].notna()], 
+                x='is_megafire', y='dsci_mean', ax=axes[1, 0])
+    axes[1, 0].set_title('DSCI: Normal vs Mega Fires')
+    axes[1, 0].set_xticklabels(['Normal', 'Mega Fire'])
+
+    valid_dsci = fires_climate[fires_climate['dsci_mean'].notna() & 
+                              fires_climate['tmean'].notna()]
+    if len(valid_dsci) > 0:
+        scatter = axes[1, 1].scatter(valid_dsci['tmean'], valid_dsci['dsci_mean'],
+                                    c=valid_dsci['is_megafire'].astype(int),
+                                    cmap='RdYlGn', alpha=0.6, s=30, edgecolors='black')
+        axes[1, 1].set_xlabel('Mean Temperature (°C)')
+        axes[1, 1].set_ylabel('DSCI')
+        axes[1, 1].set_title('Temperature vs Drought: Mega Fires (Red) vs Normal')
+        axes[1, 1].grid(True, alpha=0.3)
+        cbar = plt.colorbar(scatter, ax=axes[1, 1])
+        cbar.set_ticks([0, 1])
+        cbar.set_ticklabels(['Normal', 'Mega Fire'])
 
 plt.tight_layout()
 plt.show()
 
-# Statistical test
 from scipy.stats import mannwhitneyu
 stat, p = mannwhitneyu(
     fires_climate[fires_climate['is_megafire']]['tmean'].dropna(),
@@ -171,7 +301,6 @@ fires_with_year = fires_climate[['Event_ID', 'YEAR', 'geometry', 'area_ha']].cop
 
 reburns = []
 for idx, fire in fires_with_year.iterrows():
-    # Find fires in previous years that overlap
     previous_fires = fires_with_year[fires_with_year['YEAR'] < fire['YEAR']]
     overlaps = previous_fires[previous_fires.intersects(fire.geometry)]
     
@@ -492,14 +621,6 @@ plt.tight_layout()
 plt.show()
 
 
-
-
-
-
-
-
-
-
 ###
 
 ### TERRA WS DATA
@@ -576,13 +697,6 @@ print("\nClimate Variable Correlations:")
 print(corr_matrix)
 
 fires_climate['wind_speed'] = fires_climate_geo['wind_speed'].values
-
-
-
-
-
-
-
 
 
 
@@ -709,15 +823,6 @@ print(seasonal_analysis.groupby('month')[['wind_speed', 'fire_count']].mean())
 
 
 
-
-
-
-
-
-
-
-
-
 ### Identify extreme wind events and their fire impacts
 
 wind_climatology['wind_percentile'] = wind_climatology.groupby('month')['wind_speed'].rank(pct=True)
@@ -800,31 +905,34 @@ if len(normal_wind_fires) > 0 and len(extreme_wind_fires) > 0:
 
 
 
-
-
-
-
-
-
-
-
-
-### Create a climate risk index combining temperature, precipitation, and wind
+### Create a climate risk index that combines temperature, precipitation, and wind
 
 from sklearn.preprocessing import StandardScaler
 
-climate_features = fires_climate[['tmean', 'ppt', 'wind_speed', 'area_ha']].dropna()
+climate_cols = ['tmean', 'ppt', 'wind_speed', 'area_ha']
+if 'dsci_mean' in fires_climate.columns:
+    climate_cols.append('dsci_mean')
+
+climate_features = fires_climate[climate_cols].dropna()
+
+scale_cols = ['tmean', 'ppt', 'wind_speed']
+if 'dsci_mean' in climate_features.columns:
+    scale_cols.append('dsci_mean')
 
 scaler = StandardScaler()
-climate_scaled = scaler.fit_transform(climate_features[['tmean', 'ppt', 'wind_speed']])
+climate_scaled = scaler.fit_transform(climate_features[scale_cols])
 
-# Risk index: high temp + low precip + high wind = high risk
-# Invert precipitation (low precip = high risk)
-climate_features['climate_risk_index'] = (
-    climate_scaled[:, 0] +  # high temperature
-    (-climate_scaled[:, 1]) +  # low precipitation
+# Risk index: high temp + low precip + high wind + high drought = high risk
+# (low precip = high risk)
+risk_components = [
+    climate_scaled[:, 0],  # high temp
+    (-climate_scaled[:, 1]),  # low precip
     climate_scaled[:, 2]  # high wind
-) / 3
+]
+if 'dsci_mean' in climate_features.columns:
+    risk_components.append(climate_scaled[:, 3])  # high drought
+
+climate_features['climate_risk_index'] = np.mean(risk_components, axis=0)
 
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
@@ -1378,7 +1486,6 @@ if len(svi_data) > 0:
 
 ### 2. match fires to counties using spatial intersection
 
-# fire centroids to geographic CRS for county matching
 fires_for_svi = fires_climate[['Event_ID', 'YEAR', 'STATE', 'area_ha', 'geometry']].copy()
 fires_for_svi = fires_for_svi.to_crs('EPSG:4326')
 fires_for_svi['centroid_lon'] = fires_for_svi.geometry.centroid.x
@@ -1423,7 +1530,6 @@ fire_impacts_by_state['burned_ha_per_1000pop'] = (
 
 fig, axes = plt.subplots(2, 2, figsize=(16, 12))
 
-# rank vs fire activity
 for state in ['WA', 'OR', 'ID']:
     state_data = fire_impacts_by_state[fire_impacts_by_state['STATE'] == state]
     if len(state_data) > 0 and state_data['avg_vuln_rank'].notna().any():
@@ -1438,7 +1544,6 @@ axes[0, 0].set_title('State Vulnerability vs Total Fire Impact')
 axes[0, 0].legend()
 axes[0, 0].grid(True, alpha=0.3)
 
-# per-capita fire impacts by state
 state_totals = fire_impacts_by_state.groupby('STATE').agg({
     'total_burned_ha': 'sum',
     'fire_count': 'sum',
@@ -1462,7 +1567,6 @@ if len(state_totals) > 0:
     axes[0, 1].grid(True, alpha=0.3)
     plt.colorbar(scatter, ax=axes[0, 1], label='Total Burned Area (ha)')
 
-# temporal trend in vulnerable areas
 for state in ['WA', 'OR', 'ID']:
     state_data = fire_impacts_by_state[fire_impacts_by_state['STATE'] == state]
     if len(state_data) > 0:
@@ -1475,7 +1579,6 @@ axes[1, 0].set_title('Fire Activity Trends by State')
 axes[1, 0].legend()
 axes[1, 0].grid(True, alpha=0.3)
 
-# distribution by state
 if len(svi_latest) > 0 and 'RPL_THEMES' in svi_latest.columns:
     svi_clean = svi_latest[svi_latest['RPL_THEMES'].notna()].copy()
     if len(svi_clean) > 0:
@@ -1487,6 +1590,197 @@ if len(svi_latest) > 0 and 'RPL_THEMES' in svi_latest.columns:
 
 plt.tight_layout()
 plt.show()
+
+### PM2.5 SMOKE DATA ANALYSIS
+
+print("\n=== Loading PM2.5 Smoke Data ===")
+
+pm25_data = None
+try:
+    import pyreadr
+    result = pyreadr.read_r("data/smoke/smokePM2pt5_predictions_daily_10km_20060101-20231231.rds")
+    if result:
+        pm25_data = result[list(result.keys())[0]]
+        print(f"Loaded PM2.5 data: {len(pm25_data)} records")
+        print(f"Columns: {pm25_data.columns.tolist()}")
+        print(pm25_data.head())
+except ImportError:
+    print("pyreadr not available. Install with: pip install pyreadr")
+    print("PM2.5 analysis will be skipped.")
+except Exception as e:
+    print(f"Error loading PM2.5 data: {e}")
+    print("PM2.5 analysis will be skipped.")
+
+if pm25_data is not None and len(pm25_data) > 0:
+    print("\n=== Processing PM2.5 Data ===")
+    
+    date_cols = [col for col in pm25_data.columns if any(x in col.lower() for x in ['date', 'time', 'year', 'day'])]
+    coord_cols = [col for col in pm25_data.columns if any(x in col.lower() for x in ['lat', 'lon', 'x', 'y'])]
+    pm25_cols = [col for col in pm25_data.columns if any(x in col.lower() for x in ['pm', 'smoke', 'conc'])]
+    
+    print(f"Date columns found: {date_cols}")
+    print(f"Coordinate columns found: {coord_cols}")
+    print(f"PM2.5 columns found: {pm25_cols}")
+    
+    if len(date_cols) > 0 and len(pm25_cols) > 0:
+        pm25_df = pm25_data.copy()
+        date_col = date_cols[0]
+        pm25_col = pm25_cols[0]
+        
+        try:
+            pm25_df[date_col] = pd.to_datetime(pm25_df[date_col], errors='coerce')
+            pm25_df['YEAR'] = pm25_df[date_col].dt.year
+            pm25_df['MONTH'] = pm25_df[date_col].dt.month
+        except:
+            pass
+
+        if 'YEAR' in pm25_df.columns:
+            pm25_annual = pm25_df.groupby('YEAR').agg({
+                pm25_col: ['mean', 'max', 'std', 'count']
+            }).reset_index()
+            pm25_annual.columns = ['YEAR', 'pm25_mean', 'pm25_max', 'pm25_std', 'pm25_count']
+            
+            if 'annual' in locals():
+                annual_pm25 = annual.merge(pm25_annual, on='YEAR', how='left')
+                
+                fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+                
+                # fire activity vs PM2.5
+                ax1 = axes[0, 0]
+                ax1_twin = ax1.twinx()
+                
+                ax1.plot(annual_pm25['YEAR'], annual_pm25['fire_count'], 
+                        color='red', marker='o', linewidth=2, label='Fire Count')
+                ax1_twin.plot(annual_pm25['YEAR'], annual_pm25['pm25_mean'], 
+                             color='brown', marker='s', linewidth=2, label='PM2.5 Mean')
+                
+                ax1.set_xlabel('Year')
+                ax1.set_ylabel('Fire Count', color='red')
+                ax1_twin.set_ylabel('PM2.5 (μg/m³)', color='brown')
+                ax1.set_title('Fire Activity vs PM2.5 Smoke Levels')
+                ax1.tick_params(axis='y', labelcolor='red')
+                ax1_twin.tick_params(axis='y', labelcolor='brown')
+                ax1.legend(loc='upper left')
+                ax1_twin.legend(loc='upper right')
+                ax1.grid(True, alpha=0.3)
+                
+                # correlation
+                valid_data = annual_pm25[annual_pm25['pm25_mean'].notna() & 
+                                        annual_pm25['total_area_ha'].notna()]
+                if len(valid_data) > 0:
+                    axes[0, 1].scatter(valid_data['total_area_ha'] / 1000,
+                                      valid_data['pm25_mean'],
+                                      c=valid_data['YEAR'], cmap='viridis',
+                                      s=100, alpha=0.6, edgecolors='black')
+                    axes[0, 1].set_xlabel('Total Burned Area (kha)')
+                    axes[0, 1].set_ylabel('Mean PM2.5 (μg/m³)')
+                    axes[0, 1].set_title('Fire Area vs PM2.5 Levels')
+                    axes[0, 1].grid(True, alpha=0.3)
+                    plt.colorbar(axes[0, 1].collections[0], ax=axes[0, 1], label='Year')
+                    
+                    corr_pm25 = valid_data[['total_area_ha', 'pm25_mean']].corr().iloc[0, 1]
+                    axes[0, 1].text(0.05, 0.95, f'r = {corr_pm25:.3f}',
+                                   transform=axes[0, 1].transAxes, va='top',
+                                   bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                
+                # PM2.5 trends
+                axes[1, 0].plot(annual_pm25['YEAR'], annual_pm25['pm25_mean'],
+                               marker='o', color='brown', linewidth=2, label='Mean')
+                axes[1, 0].plot(annual_pm25['YEAR'], annual_pm25['pm25_max'],
+                               marker='s', color='darkred', linewidth=2, linestyle='--', label='Max')
+                axes[1, 0].set_xlabel('Year')
+                axes[1, 0].set_ylabel('PM2.5 (μg/m³)')
+                axes[1, 0].set_title('PM2.5 Smoke Trends Over Time')
+                axes[1, 0].legend()
+                axes[1, 0].grid(True, alpha=0.3)
+                
+                # seasonal patterns
+                if 'MONTH' in pm25_df.columns:
+                    pm25_monthly = pm25_df.groupby('MONTH')[pm25_col].mean()
+                    axes[1, 1].bar(range(1, 13), pm25_monthly.values,
+                                 color='sienna', edgecolor='black', alpha=0.7)
+                    axes[1, 1].set_xlabel('Month')
+                    axes[1, 1].set_ylabel('Mean PM2.5 (μg/m³)')
+                    axes[1, 1].set_title('Seasonal PM2.5 Patterns')
+                    axes[1, 1].set_xticks(range(1, 13))
+                    axes[1, 1].set_xticklabels(['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'])
+                    axes[1, 1].grid(True, alpha=0.3, axis='y')
+                else:
+                    axes[1, 1].text(0.5, 0.5, 'Monthly data not available',
+                                   ha='center', va='center', transform=axes[1, 1].transAxes)
+                    axes[1, 1].set_title('Seasonal PM2.5 Patterns')
+                
+                plt.tight_layout()
+                plt.show()
+        
+        # link PM2.5 with SVI
+        if 'state_vuln' in locals() and 'YEAR' in pm25_df.columns:
+            print("\n=== PM2.5 and Social Vulnerability Analysis ===")
+
+            pm25_by_year = pm25_df.groupby('YEAR')[pm25_col].agg(['mean', 'max']).reset_index()
+            pm25_by_year.columns = ['YEAR', 'pm25_mean', 'pm25_max']
+
+            pm25_vuln = pd.DataFrame()
+            vuln_trends_df = None # idk what i'm doing
+            try:
+                if 'vuln_trends_df' in globals() and isinstance(vuln_trends_df, pd.DataFrame) and len(vuln_trends_df) > 0:
+                    pm25_vuln = vuln_trends_df.merge(pm25_by_year, on='YEAR', how='inner')
+                elif 'svi_data' in locals() and len(svi_data) > 1:
+                    vuln_trends = []
+                    for year, df in svi_data.items():
+                        if 'RPL_THEMES' in df.columns and 'STATE_ABBR' in df.columns:
+                            state_avg = df.groupby('STATE_ABBR')['RPL_THEMES'].mean().reset_index()
+                            state_avg['YEAR'] = year
+                            vuln_trends.append(state_avg)
+                    
+                    if len(vuln_trends) > 0:
+                        vuln_trends_df_temp = pd.concat(vuln_trends, ignore_index=True)
+                        pm25_vuln = vuln_trends_df_temp.merge(pm25_by_year, on='YEAR', how='inner')
+            except Exception as e:
+                print(f"Note: Could not merge PM2.5 with vulnerability data: {e}")
+            
+            if len(pm25_vuln) > 0:
+                fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+                
+                # vulnerability vs PM2.5 exposure
+                for state in ['WA', 'OR', 'ID']:
+                    state_data = pm25_vuln[pm25_vuln['STATE_ABBR'] == state]
+                    if len(state_data) > 0:
+                        axes[0].scatter(state_data['RPL_THEMES'], state_data['pm25_mean'],
+                                       label=state, alpha=0.6, s=50)
+                
+                axes[0].set_xlabel('Vulnerability Rank')
+                axes[0].set_ylabel('Mean PM2.5 (μg/m³)')
+                axes[0].set_title('Social Vulnerability vs PM2.5 Exposure')
+                axes[0].legend()
+                axes[0].grid(True, alpha=0.3)
+                
+                # temporal trends
+                ax2 = axes[1]
+                ax2_twin = ax2.twinx()
+                
+                avg_vuln = pm25_vuln.groupby('YEAR')['RPL_THEMES'].mean()
+                avg_pm25 = pm25_vuln.groupby('YEAR')['pm25_mean'].mean()
+                
+                ax2.plot(avg_vuln.index, avg_vuln.values,
+                        color='blue', marker='o', linewidth=2, label='Avg Vulnerability')
+                ax2_twin.plot(avg_pm25.index, avg_pm25.values,
+                             color='brown', marker='s', linewidth=2, label='Avg PM2.5')
+                
+                ax2.set_xlabel('Year')
+                ax2.set_ylabel('Vulnerability Rank', color='blue')
+                ax2_twin.set_ylabel('PM2.5 (μg/m³)', color='brown')
+                ax2.set_title('Vulnerability and PM2.5 Trends')
+                ax2.tick_params(axis='y', labelcolor='blue')
+                ax2_twin.tick_params(axis='y', labelcolor='brown')
+                ax2.legend(loc='upper left')
+                ax2_twin.legend(loc='upper right')
+                ax2.grid(True, alpha=0.3)
+                
+                plt.tight_layout()
+                plt.show()
+        
+        print("\n=== PM2.5 Analysis Complete ===")
 
 ### 4. vulnerability trends over time
 
