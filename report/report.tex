@@ -3,12 +3,15 @@
 \usepackage{graphicx}
 \usepackage[affil-it]{authblk}
 \usepackage{amsmath}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{float}
 \graphicspath{{../img/}}
 
 \title{\textbf{Spatiotemporal Trends in Pacific Northwest Wildfire Occurrence and Firefighting Resource Demand}}
 \author{Blaise Rettig}
 \affil{Fowler School of Engineering, Chapman University} 
-\date{12 November 2025}
+\date{08 December 2025}
 
 \begin{document}
 \maketitle
@@ -98,26 +101,8 @@
         \end{center}
 
         \begin{center}
-            \includegraphics[width=\linewidth]{1Figure_2.png}
-            Figure 2: fire size as a function of mean annual temperature. Data source: MTBS, PRISM.
-        \end{center}
-
-        \begin{center}
-            \includegraphics[width=\linewidth]{1Figure_3.png}
-            Figure 3: fire size as a function of mean annual precipitation. Data source: MTBS, PRISM.
-        \end{center}
-
-        \begin{center}
-            \includegraphics[width=\linewidth]{1Figure_4.png}
-            Figure 4: random Forest Regressor to estimate importance of different climate variables on fire size. Data source: PRISM, U.S. Drought Monitor via UNL. 
-        \end{center}
-
-        \begin{center}
-            \includegraphics[width=\linewidth]{1Figure_5.png}
-            Figure 5: various drought-related analyses. Data source: U.S. Drought Monitor via UNL. 
-            \begin{verbatim}
-            Temperature difference p-value: 0.437
-            \end{verbatim}
+            \includegraphics[width=\linewidth]{1Figure_23.png}
+            Figure 2: fire size as a function of mean annual temperature and mean annual precipitation. Data source: MTBS, PRISM.
         \end{center}
 
         \begin{center}
@@ -126,16 +111,6 @@
             \begin{verbatim}
             Reburned areas: 929
             \end{verbatim}
-        \end{center}
-
-        \begin{center}
-            \includegraphics[width=\linewidth]{1Figure_7.png}
-            Figure 7: fire season length and number of wildfires plotted over time. Data source: MTBS.
-        \end{center}
-
-        \begin{center}
-            \includegraphics[width=\linewidth]{1Figure_8.png}
-            Figure 8: various drought related analyses. Data source: MTBS, U.S. Drought Monitor via UNL. 
         \end{center}
 
         \begin{center}
@@ -163,7 +138,7 @@
         \end{center}
 
         \begin{center}
-            \includegraphics[width=\linewidth]{2Figure_5.png}
+            \includegraphics[width=\linewidth]{2Figure_5_1.png}
             Figure 12: total personnel and fires per year. Data source: MTBS, ICS-209 via U.S. Forest Service.
         \end{center}
 
@@ -178,11 +153,6 @@
             area_ha    -0.017428  0.053166    0.004085  1.000000
             \end{verbatim}
         \end{center}    
-
-        \begin{center}
-            \includegraphics[width=\linewidth]{4Figure_1.png}
-            Figure 15: electricity generation versus fire activity. Data source: MTBS, EIA.
-        \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{4Figure_2.png}
@@ -506,6 +476,23 @@
 
 \section{Appendix}
 
+\subsection{Additional Figures}
+
+    \begin{center}
+        \includegraphics[width=\linewidth]{1Figure_7.png}
+        Figure 7: fire season length and number of wildfires plotted over time. Data source: MTBS.
+    \end{center}
+
+    \begin{center}
+        \includegraphics[width=\linewidth]{1Figure_8.png}
+        Figure 8: various drought related analyses. Data source: MTBS, U.S. Drought Monitor via UNL. 
+    \end{center}
+
+    \begin{center}
+        \includegraphics[width=\linewidth]{4Figure_1.png}
+        Figure 15: electricity generation versus fire activity. Data source: MTBS, EIA.
+    \end{center}
+
 \subsection{Code Repository}
 
 All analysis code, scripts, and QGIS files are available in the project GitHub repository:
@@ -516,56 +503,58 @@ All analysis code, scripts, and QGIS files are available in the project GitHub r
 
 \subsection{Data Sources and Access Information}
 
-\subsubsection{Wildfire Data}
-\begin{itemize}
-    \item \textbf{Monitoring Trends in Burn Severity (MTBS)} \\
-    Fire perimeters and burn severity indices \\
-    \texttt{https://www.mtbs.gov/direct-download}
-    
-    \item \textbf{ICS-209 Incident Reports} \\
-    Firefighting resource deployment and suppression costs \\
-    U.S. Forest Service Fire Modeling Institute \\
-    \texttt{https://research.fs.usda.gov/firelab/products/dataandtools/ics-209-plus}
-\end{itemize}
+\begin{table}[H]
+\centering
+\caption{Data Sources and Access Information}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} X p{3cm}}
+\hline
+\textbf{Variables / Dataset} & \textbf{Data Type} & \textbf{Input Data / Description} & \textbf{Source / Access} \\
+\hline
 
-\subsubsection{Climate and Environmental Data}
-\begin{itemize}
-    \item \textbf{U.S. Drought Monitor - Drought Severity and Coverage Index (DSCI)} \\
-    Weekly drought severity classifications \\
-    University of Nebraska-Lincoln \\
-    \texttt{https://droughtmonitor.unl.edu/DmData/DataDownload/DSCI.aspx}
-    
-    \item \textbf{PRISM Climate Group} \\
-    Temperature and precipitation \\
-    Oregon State University \\
-    \texttt{https://prism.oregonstate.edu/data/}
-    
-    \item \textbf{TerraClimate} \\
-    Wind speed \\
-    Climatology Lab \\
-    \texttt{https://www.climatologylab.org/terraclimate.html}
-    
-    \item \textbf{Stanford EchoLab Wildfire Smoke Dataset} \\
-    Daily PM2.5 concentrations from wildfire smoke \\
-    Stanford University \\
-    \texttt{https://www.stanfordecholab.com/wildfire\_smoke}
-\end{itemize}
+MTBS (Monitoring Trends in Burn Severity) &
+Observational &
+Fire perimeters and burn severity indices &
+\href{https://www.mtbs.gov/direct-download}{MTBS Download Portal} \\
 
-\subsubsection{Infrastructure and Energy}
-\begin{itemize}
-    \item \textbf{U.S. Energy Information Administration (EIA)} \\
-    Electricity generation and power plant locations \\
-    \texttt{https://www.eia.gov/opendata/browser/}
-\end{itemize}
+ICS-209 Incident Reports &
+Observational &
+Firefighting resource deployment and suppression costs; Incident summaries &
+\href{https://research.fs.usda.gov/firelab/products/dataandtools/ics-209-plus}{USFS Fire Modeling Institute} \\
 
-\subsubsection{Socioeconomic and Vulnerability}
-\begin{itemize}
-    \item \textbf{CDC/ATSDR Social Vulnerability Index (SVI)} \\
-    County-level social vulnerability indicators \\
-    Centers for Disease Control and Prevention \\
-    Agency for Toxic Substances and Disease Registry \\
-    \texttt{https://www.atsdr.cdc.gov/place-health/php/svi/svi-data-documentation-download.html}
-\end{itemize}
+U.S. Drought Monitor (DSCI) &
+Modeled, observational &
+Weekly drought severity classifications &
+\href{https://droughtmonitor.unl.edu/DmData/DataDownload/DSCI.aspx}{U.S. Drought Monitor DSCI} \\
+
+PRISM Climate Data &
+Observational &
+Temperature and precipitation time series &
+\href{https://prism.oregonstate.edu/data/}{PRISM Climate Group} \\
+
+TerraClimate &
+Modeled &
+Wind speed and environmental climate variables &
+\href{https://www.climatologylab.org/terraclimate.html}{TerraClimate} \\
+
+Stanford EchoLab Wildfire Smoke Dataset &
+Modeled / Observational &
+Daily PM\textsubscript{2.5} concentrations attributable to wildfire smoke &
+\href{https://www.stanfordecholab.com/wildfire_smoke}{Stanford EchoLab Smoke Data} \\
+
+U.S. EIA Power Plant Data &
+Observational &
+Electricity generation and power plant locations &
+\href{https://www.eia.gov/opendata/browser/}{U.S. EIA Open Data} \\
+
+CDC/ATSDR Social Vulnerability Index (SVI) &
+Observational &
+County-level social vulnerability indicators &
+\href{https://www.atsdr.cdc.gov/place-health/php/svi/svi-data-documentation-download.html}{CDC / ATSDR SVI} \\
+\hline
+\end{tabularx}
+\end{table}
+
 
 \subsection{Software and Tools}
 
