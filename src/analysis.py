@@ -114,13 +114,42 @@ fires_climate = gpd.GeoDataFrame(pd.concat(climate_stats, ignore_index=True), cr
 fires_climate = fires_climate.dropna(subset=['tmean', 'ppt'])
 fires_climate = fires_climate.to_crs(epsg=5070)
 
-sns.lmplot(data=fires_climate, x='tmean', y='area_ha', hue='STATE', scatter_kws={'s':10})
-plt.title("Fire Size vs Mean Annual Temperature (PRISM 2000–2024)")
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+# --- (a) Temperature ---
+sns.regplot(
+    data=fires_climate,
+    x='tmean', y='area_ha',
+    scatter_kws={'s': 10},
+    ax=axes[0]
+)
+axes[0].set_title("(a) Fire Size vs Mean Annual Temperature (PRISM 2000–2024)")
+
+sns.scatterplot(
+    data=fires_climate,
+    x='tmean', y='area_ha',
+    hue='STATE', s=10, ax=axes[0],
+    legend=False 
+)
+
+# --- (b) Precipitation ---
+sns.regplot(
+    data=fires_climate,
+    x='ppt', y='area_ha',
+    scatter_kws={'s': 10},
+    ax=axes[1]
+)
+axes[1].set_title("(b) Fire Size vs Total Annual Precipitation (PRISM 2000–2024)")
+
+sns.scatterplot(
+    data=fires_climate,
+    x='ppt', y='area_ha',
+    hue='STATE', s=10, ax=axes[1]
+)
+
+plt.tight_layout()
 plt.show()
 
-sns.lmplot(data=fires_climate, x='ppt', y='area_ha', hue='STATE', scatter_kws={'s':10})
-plt.title("Fire Size vs Total Annual Precipitation (PRISM 2000–2024)")
-plt.show()
 
 ###
 
@@ -556,10 +585,28 @@ daily_demand = ics_pnw_valid.groupby('year').agg({
 
 daily_demand.columns = ['year', 'total_personnel', 'active_fires', 'total_acres', 'cumulative_cost']
 
-fig, ax = plt.subplots(1, 2, figsize=(12, 5))
-daily_demand.plot(x='year', y='total_personnel', ax=ax[0], title='Total Personnel per Year')
-daily_demand.plot(x='year', y='active_fires', ax=ax[1], title='Number of Fires per Year')
-plt.tight_layout()
+fig, ax1 = plt.subplots(figsize=(10, 5))
+
+# --- Left axis: Total Personnel ---
+color1 = 'tab:blue'
+ax1.set_xlabel("Year")
+ax1.set_ylabel("Total Personnel", color=color1)
+ax1.plot(daily_demand['year'], daily_demand['total_personnel'],
+         marker='o', color=color1, label='Total Personnel')
+ax1.tick_params(axis='y', labelcolor=color1)
+
+# --- Right axis: Active Fires ---
+ax2 = ax1.twinx()
+color2 = 'tab:red'
+ax2.set_ylabel("Active Fires", color=color2)
+ax2.plot(daily_demand['year'], daily_demand['active_fires'],
+         marker='s', linestyle='--', color=color2, label='Active Fires')
+ax2.tick_params(axis='y', labelcolor=color2)
+
+# --- Title ---
+plt.title("Total Personnel and Number of Fires per Year")
+
+fig.tight_layout()
 plt.show()
 
 ### 6
