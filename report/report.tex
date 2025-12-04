@@ -40,18 +40,18 @@
     \subsection{Data Sources}
 
     \subsubsection{Wildfire Activity and Severity}
-    Historical wildfire activity and severity will be characterized using datasets from the Monitoring Trends in Burn Severity (MTBS), which provides fire perimeters, burn severity indices, and postfire vegetation metrics across the Pacific Northwest. Additional operational information, including resource mobilization, fire duration, personnel deployment, and suppression costs, will be derived from National Interagency Fire Center (NIFC) records and ICS-209 incident reports.
+    Historical wildfire activity and severity will be characterized using datasets from the Monitoring Trends in Burn Severity (MTBS), which provides fire perimeters, burn severity indices, and postfire vegetation metrics across the Pacific Northwest. Additional information, including resource mobilization, fire duration, personnel deployment, and suppression costs, will be derived from National Interagency Fire Center (NIFC) records and ICS-209 incident reports.
 
     \subsubsection{Environmental and Climatic Variables}
-    Environmental and climatic drivers of wildfire behavior will be assessed using temperature and precipitation data from the PRISM Climate Group, wind speed estimates from the TerraClimate reanalysis product, and smoke-related PM\textsubscript{2.5} exposure data from the Stanford EchoLab. Together, these sources capture both long-term conditions and acute atmospheric impacts relevant to wildfire dynamics.
+    Environmental and climatic drivers of wildfire behavior will be assessed using temperature and precipitation data from the PRISM Climate Group, wind speed estimates from the TerraClimate reanalysis product, and smoke-related PM\textsubscript{2.5} exposure data from the Stanford EchoLab.
 
     \subsubsection{Infrastructure and Energy Systems}
-    Impacts of wildfires on critical energy infrastructure will be examined through datasets from the U.S. Energy Information Administration (EIA), which provide information on electricity generation and total energy output. These data enable evaluation of sectoral disruptions linked to wildfire events.
+    Impacts of wildfires on critical energy infrastructure will be examined through datasets from the U.S. Energy Information Administration (EIA), which provide information on electricity generation and total energy output.
 
     \subsubsection{Socioeconomic and Community Vulnerability}
-    Societal exposure, vulnerability, and potential displacement will be analyzed using population density metrics and the Social Vulnerability Index (SVI) from the U.S. Census Bureau and FEMA. These sources support assessment of how wildfire hazards intersect with community characteristics.\newline
+    Societal exposure, vulnerability, and potential displacement will be analyzed using population density metrics and the Social Vulnerability Index (SVI) from the U.S. Census Bureau and FEMA.\newline
 
-    Together, these datasets form a comprehensive foundation for analyzing the interactions among wildfire occurrence, firefighting resource demand, and multi-sector impacts across the Pacific Northwest.
+    Together, these datasets form a foundation for analyzing the interactions among wildfire occurrence, firefighting resource demand, and multi-sector impacts across the Pacific Northwest.
 
     \subsection{Analytical Methods}
     
@@ -92,7 +92,7 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{1Figure_6.png}
-            Figure 6: count of areas that experience frequent re-burn. Data source: MTBS. 
+            Figure 3: count of areas that experience frequent re-burn. Data source: MTBS. 
             \begin{verbatim}
             Reburned areas: 929
             \end{verbatim}
@@ -100,12 +100,12 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{2Figure_1.png}
-            Figure 9: firefighting personnel versus fire size. Data source: ICS-209 via U.S. Forest Service.
+            Figure 4: firefighting personnel versus fire size. Data source: ICS-209 via U.S. Forest Service.
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{2Figure_2.png}
-            Figure 10: firefighting personnel and cost versus structure risk. Data source: MTBS, ICS-209 via U.S. Forest Service.
+            Figure 5: firefighting personnel and cost versus structure risk. Data source: MTBS, ICS-209 via U.S. Forest Service.
             \begin{verbatim}
             Median personnel (structures at risk): 46.8
             Median personnel (no structures): 26.1
@@ -114,7 +114,7 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{2Figure_3.png}
-            Figure 11: various analyses relating to firefighting personnel and evacuation risk. Data source: MTBS, ICS-209 via U.S. Forest Service.
+            Figure 6: various analyses relating to firefighting personnel and evacuation risk. Data source: MTBS, ICS-209 via U.S. Forest Service.
             \begin{verbatim}
             Total fires with evacuations: 143
             Total fires with structure loss: 481
@@ -124,12 +124,12 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{2Figure_5_1.png}
-            Figure 12: total personnel and fires per year. Data source: MTBS, ICS-209 via U.S. Forest Service.
+            Figure 7: total personnel and fires per year. Data source: MTBS, ICS-209 via U.S. Forest Service.
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{3Figure_1.png}
-            Figure 13: fire size as affected by wind speed. Data source: MTBS, TerraClimate.
+            Figure 8: fire size as affected by wind speed. Data source: MTBS, TerraClimate.
             \begin{verbatim}
                           tmean       ppt  wind_speed   area_ha
             tmean       1.000000 -0.445637    0.281199 -0.017428
@@ -141,7 +141,7 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{4Figure_2.png}
-            Figure 16: fire activity versus proximity to energy infrastructure. Data source: MTBS, EIA.
+            Figure 9: fire activity versus proximity to energy infrastructure. Data source: MTBS, EIA.
             \begin{verbatim}
                                  count   mean   std     min   25%   50%    75%    max
             proximity_category
@@ -154,7 +154,7 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{5Figure_2.png}
-            Figure 18: social vulnerability index versus fire activity. Data source: MTBS, CDC ASTDR.
+            Figure 10: social vulnerability index versus fire activity. Data source: MTBS, CDC ASTDR.
             \begin{verbatim}
             Top 10 Most Vulnerable Counties:
                     STATE         COUNTY  RPL_THEMES
@@ -173,12 +173,12 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{5Figure_4.png}
-            Figure 20: fire activity and smoke pollution over time. Data source: MTBS, EchoLab via Stanford University.
+            Figure 11: fire activity and smoke pollution over time. Data source: MTBS, EchoLab via Stanford University.
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{5Figure_5.png}
-            Figure 21: social vulnerability versus smoke exposure. Data source: CDC ASTDR, EchoLab via Stanford University.
+            Figure 12: social vulnerability versus smoke exposure. Data source: CDC ASTDR, EchoLab via Stanford University.
         \end{center}
 
     \subsection{Spatial Results}
@@ -187,12 +187,12 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_1.png}
-            Figure 22: 1984-2024 daily fire occurrences (dots) and fire boundaries (polygons). Data source: MTBS. 
+            Figure 13: 1984-2024 daily fire occurrences (dots) and fire boundaries (polygons). Data source: MTBS. 
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_2.png}
-            Figure 23: annual mean temperature difference map between 2024 and 2000.
+            Figure 14: annual mean temperature difference map between 2024 and 2000.
             \begin{verbatim}
             band_min (blue)     band_max (red)      unit
             -2.91               3.41                C
@@ -201,7 +201,7 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_3.png}
-            Figure 24: annual mean precipitation difference map between 2024 and 2000.
+            Figure 15: annual mean precipitation difference map between 2024 and 2000.
             \begin{verbatim}
             band_min (gold)     band_max (blue)      unit
             -584                2173                 mm
@@ -210,32 +210,32 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_4.png}
-            Figure 25: wind speed visualization in low-fire year (2024).
+            Figure 16: wind speed visualization in low-fire year (2024).
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_5.png}
-            Figure 26: wind speed visualization in high-fire year (2000).
+            Figure 17: wind speed visualization in high-fire year (2000).
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_6.png}
-            Figure 27: heatmap (kernel density estimation) of fire activity.
+            Figure 18: heatmap (kernel density estimation) of fire activity.
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_7.png}
-            Figure 28: heatmap (kernel density estimation) of fire activity with boundaries and occurrences overlayed.
+            Figure 19: heatmap (kernel density estimation) of fire activity with boundaries and occurrences overlayed.
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_8.png}
-            Figure 29: power plants and energy producing infrastructure (yellow dots).
+            Figure 20: power plants and energy producing infrastructure (yellow dots).
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{6Figure_9.png}
-            Figure 30: the six most socially vulnerable counties across each state.
+            Figure 21: the six most socially vulnerable counties across each state.
             \begin{verbatim}
             STATE            COUNTY 
             OR       Malheur County
@@ -363,12 +363,12 @@
 
         \begin{center}
             \includegraphics[width=\linewidth]{model_performance_improved.png}
-            Figure 31: performance statistics.
+            Figure 22: performance statistics.
         \end{center}
 
         \begin{center}
             \includegraphics[width=\linewidth]{prediction_examples_improved.png}
-            Figure 32: graphical predictions.
+            Figure 23: graphical predictions.
         \end{center}
 
 \section{Discussion and Conclusions}
@@ -383,27 +383,25 @@
 
     The temporal analyses reveal several trends. Figure 1 demonstrates the relationship between fire count per year and total burned area. The large peaks in both graphs around 2006 and 2012 suggest that the large number of fires overwhelmed firefighting efforts leading to large burn areas, while the other large peaks on the fire count graph, 2000, 2017, etc., are not substantiated by similarly large peaks on the burn area graph, indicating that these fires were effectively combated.
 
-    Climate variable relationships proved more nuanced than anticipated. Figure 2 shows a weak negative correlation between mean annual temperature and fire size (contrary to expectations). The precipitation relationship (Figure 3) similarly shows high variability, suggesting that simple climate metrics alone are insufficient predictors beyond what is obvious (lower precipitation and higher temperature indicate more fires).
+    Climate variable relationships proved more nuanced than anticipated. Figure 2 shows a weak negative correlation between mean annual temperature and fire size (contrary to expectations). The precipitation relationship similarly shows high variability, suggesting that simple climate metrics alone are insufficient predictors beyond what is obvious (lower precipitation and higher temperature indicate more fires).
 
-    The drought analysis (Figure 5) revealed no statistically significant temperature difference (p=0.437) between drought and non-drought conditions during fire events. The Random Forest feature importance analysis (Figure 4) confirmed that temperature and precipitation values are stronger predictors of fire size than drought indices.
-
-    Fire season length has generally expanded (Figure 7), with the number of active fire days per year increasing over the period. The identification of 929 reburned areas (Figure 6) highlights the growing prevalence of short-interval reburns.
+    Fire season length has generally expanded (Figure 24), with the number of active fire days per year increasing over the period. The identification of 929 reburned areas (Figure 3) highlights the growing prevalence of short-interval reburns.
 
     \subsection{Infrastructure and Societal Impacts}
 
-    The analysis of firefighting resource deployment (Figures 9-12) shows relationships between structural threat and personnel allocation. Fires threatening structures required nearly double the median personnel (46.8 vs. 26.1) compared to backcountry fires. However, the 7.73\% average loss rate when structures were threatened suggests that even with more resource deployment, structural protection remains challenging during major fire events.
+    The analysis of firefighting resource deployment (Figures 4-7) shows relationships between structural threat and personnel allocation. Fires threatening structures required nearly double the median personnel (46.8 vs. 26.1) compared to backcountry fires. However, the 7.73\% average loss rate when structures were threatened suggests that even with more resource deployment, structural protection remains challenging during major fire events.
 
-    Energy infrastructure analysis (Figures 15-17) showed spatial correlations between fire activity and power plants, with fires occurring most frequently in the "Close (10-50km)" category. However, the relationship between major fire years and electricity generation patterns was inconsistent, suggesting that while fires may cause localized disruptions, the regional grid is resilient.
+    Energy infrastructure analysis (Figure 9) showed spatial correlations between fire activity and power plants, with fires occurring most frequently in the "Close (10-50km)" category. However, the relationship between major fire years and electricity generation patterns was inconsistent, suggesting that while fires may cause localized disruptions, the regional grid is resilient.
 
-    Social vulnerability mapping (Figures 18, 21, 30) identified disparities in wildfire exposure across the PNW. Counties with the highest social vulnerability indices consistently experience elevated fire exposure and smoke pollution.
+    Social vulnerability mapping (Figures 10, 12) identified disparities in wildfire exposure across the PNW. Counties with the highest social vulnerability indices consistently experience elevated fire exposure and smoke pollution.
 
-    Smoke exposure analysis (Figures 20-21) demonstrated that PM2.5 concentrations have increased substantially during major fire years.
+    Smoke exposure analysis (Figure 11) demonstrated that PM2.5 concentrations have increased substantially during major fire years.
 
     \subsection{Spatial Patterns and Hotspot Identification}
 
-    The spatial analysis conducted in QGIS (Figures 22-30) shows geographic patterns in fire occurrence. The kernel density estimation (Figures 27-28) identified persistent fire hotspots in eastern Oregon, central Washington, and southern Idaho, regions characterized by dry forests, shrublands, and grasslands with high fuel loads. These hotspots align with areas experiencing the greatest temperature increases (Figure 23) and precipitation declines (Figure 24) over the study period.
+    The spatial analysis conducted in QGIS (Figures 13-21) shows geographic patterns in fire occurrence. The kernel density estimation (Figures 18-19) identified persistent fire hotspots in eastern Oregon, central Washington, and southern Idaho, regions characterized by dry forests, shrublands, and grasslands with high fuel loads. These hotspots align with areas experiencing the greatest temperature increases (Figure 15) and precipitation declines (Figure 16) over the study period.
 
-    Wind speed visualizations (Figures 25-26) comparing low-fire year 2024 with high-fire year 2000 showed relatively modest differences in mean wind patterns, suggesting that perhaps extreme wind events rather than seasonal averages may be more critical in fire spread. This indicates that incorporating wind gust frequency and direction during fire-weather events could improve the predictive model's performance.
+    Wind speed visualizations (Figures 16-17) comparing low-fire year 2024 with high-fire year 2000 showed relatively modest differences in mean wind patterns, suggesting that perhaps extreme wind events rather than seasonal averages may be more critical in fire spread. This indicates that incorporating wind gust frequency and direction during fire-weather events could improve the predictive model's performance.
 
     \subsection{Comparison to Existing Literature}
 
@@ -465,17 +463,17 @@
 
     \begin{center}
         \includegraphics[width=\linewidth]{1Figure_7.png}
-        Figure 7: fire season length and number of wildfires plotted over time. Data source: MTBS.
+        Figure 24: fire season length and number of wildfires plotted over time. Data source: MTBS.
     \end{center}
 
     \begin{center}
         \includegraphics[width=\linewidth]{1Figure_8.png}
-        Figure 8: various drought related analyses. Data source: MTBS, U.S. Drought Monitor via UNL. 
+        Figure 25: various drought related analyses. Data source: MTBS, U.S. Drought Monitor via UNL. 
     \end{center}
 
     \begin{center}
         \includegraphics[width=\linewidth]{4Figure_1.png}
-        Figure 15: electricity generation versus fire activity. Data source: MTBS, EIA.
+        Figure 26: electricity generation versus fire activity. Data source: MTBS, EIA.
     \end{center}
 
 \subsection{Code Repository}
